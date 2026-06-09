@@ -28,6 +28,37 @@ plot_dose_response(
   plot_title = TRUE,
   enforce_bottom_threshold = NULL,
   bottom_threshold = 60,
+  label_sep = NULL,
+  axis_line_width = 0.8,
+  axis_vjust = NULL,
+  tick_length = NULL,
+  error_linewidth = 0.8,
+  point_alpha = 1,
+  legend_spacing = NULL,
+  aspect_ratio = NULL,
+  byrow = FALSE,
+  axis_line_color = "black",
+  transparent_background = FALSE,
+  panel_border = FALSE,
+  plot_title_size = NULL,
+  legend_text_size = NULL,
+  legend_title_size = NULL,
+  curve_alpha = 1,
+  plot_margin = NULL,
+  axis_title_color = "black",
+  axis_text_color = "black",
+  ic50_linetype = "dashed",
+  ic50_linewidth = 0.8,
+  ic50_line_alpha = 1,
+  error_alpha = 1,
+  point_shape = 16,
+  grid_color = "grey90",
+  grid_minor_color = "grey95",
+  grid_linewidth = 0.5,
+  axis_expand = c(0, 0),
+  title_hjust = 0.5,
+  point_size_scale = 2,
+  legend_annotation_scale = 0.3,
   verbose = FALSE
 )
 }
@@ -83,6 +114,114 @@ character = custom title text.}
 was used in analysis (default: NULL, auto-detected from results).}
 
 \item{bottom_threshold}{Numeric value for bottom threshold (default: 60).}
+
+\item{label_sep}{Character string. Separator used for DISPLAY purposes in
+titles, filenames, and metadata. When \code{NULL} (default), auto-detected
+from \code{attr(results, "label_sep")}; falls back to \code{":"} if the
+attribute is absent. This only affects what the user sees — the internal
+data separator used for parsing compound names is always read from the
+attribute and is never changed. For example, \code{label_sep = "/"} renders
+\code{"EPHA1/KK135"} in the title while the data still stores
+\code{"EPHA1:KK135"} internally.}
+
+\item{axis_line_width}{Numeric. Line width of the manually drawn x/y axis
+lines (default: 0.8).}
+
+\item{axis_vjust}{Numeric or NULL. Vertical justification (\code{vjust}) of
+the axis titles. \code{NULL} (default) leaves the ggplot2 default unchanged.}
+
+\item{tick_length}{Numeric or NULL. Axis tick length in centimetres.
+\code{NULL} (default) preserves the \code{theme_minimal()} default.}
+
+\item{error_linewidth}{Numeric. Line width of the error bars (default: 0.8).}
+
+\item{point_alpha}{Numeric between 0 and 1. Opacity of the data points
+(default: 1, fully opaque). Does not affect error-bar opacity.}
+
+\item{legend_spacing}{Numeric or NULL. Spacing (in points) between legend
+items, applied via \code{legend.spacing}. \code{NULL} (default) leaves the
+theme default unchanged.}
+
+\item{aspect_ratio}{Numeric or NULL. Panel aspect ratio
+(\code{aspect.ratio} in \code{theme()}). \code{NULL} (default) leaves it unset.}
+
+\item{byrow}{Logical. Whether legend keys are filled by row (\code{TRUE}) or
+by column (\code{FALSE}, default). Applied via \code{theme(legend.byrow=)}
+(the modern ggplot2 mechanism; the old \code{guide_legend(byrow=)} argument
+was removed in ggplot2 4.0).}
+
+\item{axis_line_color}{Character string. Colour of the axis lines and tick
+marks (default: \code{"black"}).}
+
+\item{transparent_background}{Logical. If \code{TRUE}, the plot and panel
+backgrounds are set to fully transparent (\code{element_rect(fill = NA)})
+instead of white. Default: \code{FALSE}.}
+
+\item{panel_border}{Logical. If \code{TRUE}, draws a full rectangular border
+around the plot panel (using \code{axis_line_color}). Default: \code{FALSE}.}
+
+\item{plot_title_size}{Numeric or NULL. Font size for the plot title.
+\code{NULL} (default) uses \code{axis_label_size + 2}.}
+
+\item{legend_text_size}{Numeric or NULL. Font size for legend text.
+\code{NULL} (default) leaves the ggplot2 default unchanged.}
+
+\item{legend_title_size}{Numeric or NULL. Font size for the legend title.
+\code{NULL} (default) leaves the ggplot2 default unchanged.}
+
+\item{curve_alpha}{Numeric between 0 and 1. Opacity of the fitted
+dose-response curve (default: 1, fully opaque).}
+
+\item{plot_margin}{Margin or NULL. Plot margin applied via
+\code{theme(plot.margin = )}. Accepts a \code{ggplot2::margin()} object.
+\code{NULL} (default) uses the built-in margin
+(t = 12, r = 8, b = 8, l = 8 pt).}
+
+\item{axis_title_color}{Character string. Colour of the axis titles
+(default: \code{"black"}).}
+
+\item{axis_text_color}{Character string. Colour of the axis text (tick labels)
+(default: \code{"black"}).}
+
+\item{ic50_linetype}{Character or integer. Line type for the IC50 vertical
+reference line (default: \code{"dashed"}). See \code{?par} for valid values.}
+
+\item{ic50_linewidth}{Numeric. Line width of the IC50 vertical reference line
+(default: 0.8).}
+
+\item{ic50_line_alpha}{Numeric between 0 and 1. Opacity of the IC50 vertical
+reference line (default: 1, fully opaque).}
+
+\item{error_alpha}{Numeric between 0 and 1. Opacity of the error bars
+(default: 1, fully opaque).}
+
+\item{point_shape}{Integer or character. Shape of the data points
+(default: 16, filled circle). See \code{?points} for valid values.}
+
+\item{grid_color}{Character string. Colour of the major grid lines when
+\code{show_grid = TRUE} (default: \code{"grey90"}).}
+
+\item{grid_minor_color}{Character string. Colour of the minor grid lines when
+\code{show_grid = TRUE} (default: \code{"grey95"}).}
+
+\item{grid_linewidth}{Numeric. Line width of the major grid lines
+(default: 0.5).}
+
+\item{axis_expand}{Numeric vector of length 2. Expansion constants for the
+continuous axis scales, passed to \code{scale_*_continuous(expand = )}.
+Default \code{c(0, 0)} removes all padding between data and axis edge.}
+
+\item{title_hjust}{Numeric. Horizontal justification of the plot title
+(default: 0.5, centred). Use 0 for left-aligned, 1 for right-aligned.}
+
+\item{point_size_scale}{Numeric. Multiplier applied to \code{point_size} for
+the actual \code{geom_point} size (default: 2). The effective point size is
+\code{point_size * point_size_scale}.}
+
+\item{legend_annotation_scale}{Numeric. Scale factor applied to
+\code{axis_text_size} for the in-plot legend text annotations
+(default: 0.3). The effective annotation size is
+\code{axis_text_size * legend_annotation_scale}.}
 
 \item{verbose}{Logical indicating whether to show verbose messages (default: FALSE).}
 }

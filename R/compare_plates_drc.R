@@ -102,6 +102,11 @@
 #' @param transparent_background Logical.  If \code{TRUE}, the plot and panel
 #'   backgrounds are set to transparent.  Passed directly to
 #'   [`plot_multiple_compounds()`].  Default: \code{FALSE}.
+#' @param label_sep Character separator used in display labels between
+#'   construct and compound names.  Defaults to \code{":"}.  Change to
+#'   e.g. \code{"/"} to show \code{"EPHA1/KK135"} instead of
+#'   \code{"EPHA1:KK135"} in plot titles and legends.  The internal data
+#'   always uses \code{":"}; this parameter only affects display.
 #' @param verbose Logical.  Print progress messages.  Default: `TRUE`.
 #'
 #' @return Invisibly returns a named list with one entry per entity plotted.
@@ -177,6 +182,7 @@ compare_plates_drc <- function(batch_drc_result,
                                axis_line_color        = "black",
                                show_border            = FALSE,
                                transparent_background = FALSE,
+                               label_sep              = ":",
                                verbose                = TRUE) {
   
   # ============================================================================
@@ -468,6 +474,7 @@ compare_plates_drc <- function(batch_drc_result,
           plot_width             = plot_width,
           plot_height            = plot_height,
           plot_dpi               = plot_dpi,
+          label_sep              = label_sep,
           verbose                = FALSE
         )
       )

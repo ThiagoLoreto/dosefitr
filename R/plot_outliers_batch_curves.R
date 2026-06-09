@@ -46,6 +46,11 @@
 #'   or \code{"construct"} (e.g. \code{"KinaseA"}). \code{"auto"} shows only
 #'   the compound name when all compounds share one construct, only the construct
 #'   name when all share one compound, and the full string otherwise.
+#' @param label_sep Character separator used in display labels between
+#'   construct and compound names.  Defaults to \code{":"}.  Change to
+#'   e.g. \code{"/"} to show \code{"EPHA1/KK135"} instead of
+#'   \code{"EPHA1:KK135"} in plot titles and legends.  The internal data
+#'   always uses \code{":"}; this parameter only affects display.
 #'
 #' @return Invisibly returns a character vector of the PNG file paths
 #'   written to \code{output_dir} (one path per successfully processed
@@ -126,7 +131,8 @@ plot_outliers_batch_curves <- function(batch_rout_output,
                                        dpi             = 150,
                                        verbose         = TRUE,
                                        panel_spacing   = 0.5,
-                                       subplot_title   = "auto") {
+                                       subplot_title   = "auto",
+                                       label_sep       = ":") {
   
   # --------------------------------------------------------------------------
   # 1. Dependency checks
@@ -407,7 +413,8 @@ plot_outliers_batch_curves <- function(batch_rout_output,
         width          = plot_width,
         height         = plot_height,
         subplot_title  = effective_subplot_mode,
-        panel_spacing  = panel_spacing
+        panel_spacing  = panel_spacing,
+        label_sep      = label_sep
       )
       saved_files[[plate_name]] <- out_file
       if (verbose) cat(sprintf("saved (%d compounds, %dx%d in)\n",

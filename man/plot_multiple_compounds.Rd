@@ -45,6 +45,30 @@ plot_multiple_compounds(
   legend_label_wrap = 25,
   legend_ncol = NULL,
   point_size = NULL,
+  axis_line_width = 0.8,
+  axis_vjust = NULL,
+  tick_length = 0.15,
+  error_linewidth = 0.5,
+  point_alpha = 1,
+  legend_spacing = NULL,
+  aspect_ratio = NULL,
+  byrow = FALSE,
+  label_sep = NULL,
+  ic50_linetype = "dashed",
+  ic50_linewidth = 0.5,
+  ic50_line_alpha = 0.8,
+  error_alpha = 0.6,
+  point_shape = 16,
+  grid_color = "grey90",
+  grid_minor_color = "grey95",
+  grid_linewidth = 0.5,
+  axis_expand = c(0, 0),
+  legend_key_fill = "white",
+  legend_bg_fill = "white",
+  title_hjust = 0.5,
+  legend_key_linewidth = 0.8,
+  legend_lineheight = 0.8,
+  plot_margin = NULL,
   plate = NULL
 )
 }
@@ -166,6 +190,88 @@ automatically wrap to new lines. Default: \code{25}.}
 \item{legend_ncol}{Numeric value specifying number of columns in legend}
 
 \item{point_size}{Numeric value for the point size}
+
+\item{axis_line_width}{Numeric. Line width of the manually drawn x/y axis
+lines (default: 0.8).}
+
+\item{axis_vjust}{Numeric or NULL. Vertical justification (\code{vjust}) of
+the axis titles. \code{NULL} (default) leaves the ggplot2 default unchanged.}
+
+\item{tick_length}{Numeric. Axis tick length in centimetres (default: 0.15).}
+
+\item{error_linewidth}{Numeric. Line width of the error bars (default: 0.5).}
+
+\item{point_alpha}{Numeric between 0 and 1. Opacity of the data points
+(default: 1, fully opaque). Does not affect error-bar opacity.}
+
+\item{legend_spacing}{Numeric or NULL. Spacing (in points) between legend
+items, applied via \code{legend.spacing}. \code{NULL} (default) leaves the
+theme default unchanged.}
+
+\item{aspect_ratio}{Numeric or NULL. Panel aspect ratio (\code{aspect.ratio}
+in \code{theme()}). \code{NULL} (default) leaves it unset.}
+
+\item{byrow}{Logical. Whether legend keys are filled by row (\code{TRUE}) or
+by column (\code{FALSE}, default). Applied via \code{theme(legend.byrow=)}
+(the modern ggplot2 mechanism; the old \code{guide_legend(byrow=)} argument
+was removed in ggplot2 4.0).}
+
+\item{label_sep}{Character string. Separator used for DISPLAY purposes in
+titles, legends, and filenames. When \code{NULL} (default), auto-detected
+from \code{attr(results, "label_sep")}; falls back to \code{":"}.
+The data separator (used for parsing compound names) is always read from
+the attribute and is never overridden by this argument. This separation
+ensures that changing the display separator does not break title or legend
+logic, which was a bug in the previous single-separator design.}
+
+\item{ic50_linetype}{Character or integer. Line type for the IC50 vertical
+reference lines (default: \code{"dashed"}). See \code{?par} for valid values.}
+
+\item{ic50_linewidth}{Numeric. Line width of the IC50 vertical reference lines
+(default: 0.5).}
+
+\item{ic50_line_alpha}{Numeric between 0 and 1. Opacity of the IC50 vertical
+reference lines (default: 0.8).}
+
+\item{error_alpha}{Numeric between 0 and 1. Opacity of the error bars
+(default: 0.6).}
+
+\item{point_shape}{Integer or character. Default shape of data points when
+shape mapping is not active (default: 16, filled circle). See \code{?points}
+for valid values. Ignored when \code{point_shapes} is provided.}
+
+\item{grid_color}{Character string. Colour of the major grid lines when
+\code{show_grid = TRUE} (default: \code{"grey90"}).}
+
+\item{grid_minor_color}{Character string. Colour of the minor grid lines when
+\code{show_grid = TRUE} (default: \code{"grey95"}).}
+
+\item{grid_linewidth}{Numeric. Line width of the major grid lines
+(default: 0.5).}
+
+\item{axis_expand}{Numeric vector of length 2. Expansion constants for the
+continuous axis scales, passed to \code{scale_*_continuous(expand = )}.
+Default \code{c(0, 0)} removes all padding between data and axis edge.}
+
+\item{legend_key_fill}{Character string. Fill colour of the legend key
+backgrounds (default: \code{"white"}).}
+
+\item{legend_bg_fill}{Character string. Fill colour of the legend background
+(default: \code{"white"}).}
+
+\item{title_hjust}{Numeric. Horizontal justification of the plot title
+(default: 0.5, centred). Use 0 for left-aligned, 1 for right-aligned.}
+
+\item{legend_key_linewidth}{Numeric. Line width of the fitted curve shown
+in legend keys via \code{guide_legend(override.aes)} (default: 0.8).}
+
+\item{legend_lineheight}{Numeric. Line height multiplier for legend text
+(default: 0.8). Controls spacing between wrapped lines.}
+
+\item{plot_margin}{Margin or NULL. Plot margin applied via
+\code{theme(plot.margin = )}. Accepts a \code{ggplot2::margin()} object.
+\code{NULL} (default) uses the built-in margin
+(t = 12, r = 8, b = 8, l = 8 pt).}
 
 \item{plate}{Character. Plate name to plot. When \code{results} is the
 output of \code{batch_drc_analysis()}, the function detects this

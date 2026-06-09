@@ -30,6 +30,83 @@
 #' @param enforce_bottom_threshold Logical indicating whether bottom threshold enforcement
 #'   was used in analysis (default: NULL, auto-detected from results).
 #' @param bottom_threshold Numeric value for bottom threshold (default: 60).
+#' @param label_sep Character string. Separator used for DISPLAY purposes in
+#'   titles, filenames, and metadata. When \code{NULL} (default), auto-detected
+#'   from \code{attr(results, "label_sep")}; falls back to \code{":"} if the
+#'   attribute is absent. This only affects what the user sees — the internal
+#'   data separator used for parsing compound names is always read from the
+#'   attribute and is never changed. For example, \code{label_sep = "/"} renders
+#'   \code{"EPHA1/KK135"} in the title while the data still stores
+#'   \code{"EPHA1:KK135"} internally.
+#' @param axis_line_width Numeric. Line width of the manually drawn x/y axis
+#'   lines (default: 0.8).
+#' @param axis_vjust Numeric or NULL. Vertical justification (\code{vjust}) of
+#'   the axis titles. \code{NULL} (default) leaves the ggplot2 default unchanged.
+#' @param tick_length Numeric or NULL. Axis tick length in centimetres.
+#'   \code{NULL} (default) preserves the \code{theme_minimal()} default.
+#' @param error_linewidth Numeric. Line width of the error bars (default: 0.8).
+#' @param point_alpha Numeric between 0 and 1. Opacity of the data points
+#'   (default: 1, fully opaque). Does not affect error-bar opacity.
+#' @param legend_spacing Numeric or NULL. Spacing (in points) between legend
+#'   items, applied via \code{legend.spacing}. \code{NULL} (default) leaves the
+#'   theme default unchanged.
+#' @param aspect_ratio Numeric or NULL. Panel aspect ratio
+#'   (\code{aspect.ratio} in \code{theme()}). \code{NULL} (default) leaves it unset.
+#' @param byrow Logical. Whether legend keys are filled by row (\code{TRUE}) or
+#'   by column (\code{FALSE}, default). Applied via \code{theme(legend.byrow=)}
+#'   (the modern ggplot2 mechanism; the old \code{guide_legend(byrow=)} argument
+#'   was removed in ggplot2 4.0).
+#' @param axis_line_color Character string. Colour of the axis lines and tick
+#'   marks (default: \code{"black"}).
+#' @param transparent_background Logical. If \code{TRUE}, the plot and panel
+#'   backgrounds are set to fully transparent (\code{element_rect(fill = NA)})
+#'   instead of white. Default: \code{FALSE}.
+#' @param panel_border Logical. If \code{TRUE}, draws a full rectangular border
+#'   around the plot panel (using \code{axis_line_color}). Default: \code{FALSE}.
+#' @param plot_title_size Numeric or NULL. Font size for the plot title.
+#'   \code{NULL} (default) uses \code{axis_label_size + 2}.
+#' @param legend_text_size Numeric or NULL. Font size for legend text.
+#'   \code{NULL} (default) leaves the ggplot2 default unchanged.
+#' @param legend_title_size Numeric or NULL. Font size for the legend title.
+#'   \code{NULL} (default) leaves the ggplot2 default unchanged.
+#' @param curve_alpha Numeric between 0 and 1. Opacity of the fitted
+#'   dose-response curve (default: 1, fully opaque).
+#' @param plot_margin Margin or NULL. Plot margin applied via
+#'   \code{theme(plot.margin = )}. Accepts a \code{ggplot2::margin()} object.
+#'   \code{NULL} (default) uses the built-in margin
+#'   (t = 12, r = 8, b = 8, l = 8 pt).
+#' @param axis_title_color Character string. Colour of the axis titles
+#'   (default: \code{"black"}).
+#' @param axis_text_color Character string. Colour of the axis text (tick labels)
+#'   (default: \code{"black"}).
+#' @param ic50_linetype Character or integer. Line type for the IC50 vertical
+#'   reference line (default: \code{"dashed"}). See \code{?par} for valid values.
+#' @param ic50_linewidth Numeric. Line width of the IC50 vertical reference line
+#'   (default: 0.8).
+#' @param ic50_line_alpha Numeric between 0 and 1. Opacity of the IC50 vertical
+#'   reference line (default: 1, fully opaque).
+#' @param error_alpha Numeric between 0 and 1. Opacity of the error bars
+#'   (default: 1, fully opaque).
+#' @param point_shape Integer or character. Shape of the data points
+#'   (default: 16, filled circle). See \code{?points} for valid values.
+#' @param grid_color Character string. Colour of the major grid lines when
+#'   \code{show_grid = TRUE} (default: \code{"grey90"}).
+#' @param grid_minor_color Character string. Colour of the minor grid lines when
+#'   \code{show_grid = TRUE} (default: \code{"grey95"}).
+#' @param grid_linewidth Numeric. Line width of the major grid lines
+#'   (default: 0.5).
+#' @param axis_expand Numeric vector of length 2. Expansion constants for the
+#'   continuous axis scales, passed to \code{scale_*_continuous(expand = )}.
+#'   Default \code{c(0, 0)} removes all padding between data and axis edge.
+#' @param title_hjust Numeric. Horizontal justification of the plot title
+#'   (default: 0.5, centred). Use 0 for left-aligned, 1 for right-aligned.
+#' @param point_size_scale Numeric. Multiplier applied to \code{point_size} for
+#'   the actual \code{geom_point} size (default: 2). The effective point size is
+#'   \code{point_size * point_size_scale}.
+#' @param legend_annotation_scale Numeric. Scale factor applied to
+#'   \code{axis_text_size} for the in-plot legend text annotations
+#'   (default: 0.3). The effective annotation size is
+#'   \code{axis_text_size * legend_annotation_scale}.
 #' @param verbose Logical indicating whether to show verbose messages (default: FALSE).
 #' @param plot_title Controls the plot title. \code{FALSE} (default) = no title;
 #'   \code{TRUE} = automatic title (construct + compound name);
@@ -181,8 +258,42 @@ plot_dose_response <- function(results, compound_index = 1, y_limits = c(0, 150)
                                x_axis_title = NULL, y_axis_title = NULL,
                                plot_title = TRUE,
                                enforce_bottom_threshold = NULL, bottom_threshold = 60,
+                               label_sep = NULL,
+                               axis_line_width = 0.8,
+                               axis_vjust = NULL,
+                               tick_length = NULL,
+                               error_linewidth = 0.8,
+                               point_alpha = 1,
+                               legend_spacing = NULL,
+                               aspect_ratio = NULL,
+                               byrow = FALSE,
+                               axis_line_color = "black",
+                               transparent_background = FALSE,
+                               panel_border = FALSE,
+                               plot_title_size = NULL,
+                               legend_text_size = NULL,
+                               legend_title_size = NULL,
+                               curve_alpha = 1,
+                               plot_margin = NULL,
+                               axis_title_color = "black",
+                               axis_text_color = "black",
+                               ic50_linetype = "dashed",
+                               ic50_linewidth = 0.8,
+                               ic50_line_alpha = 1,
+                               error_alpha = 1,
+                               point_shape = 16,
+                               grid_color = "grey90",
+                               grid_minor_color = "grey95",
+                               grid_linewidth = 0.5,
+                               axis_expand = c(0, 0),
+                               title_hjust = 0.5,
+                               point_size_scale = 2,
+                               legend_annotation_scale = 0.3,
                                verbose = FALSE) {
   
+  # Null-coalescing operator
+  `%||%` <- function(a, b) if (is.null(a) || length(a) == 0 || all(is.na(a))) b else a
+
   # Check if required packages are installed
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
     stop("ggplot2 package is required. Please install it with: install.packages('ggplot2')")
@@ -210,6 +321,19 @@ plot_dose_response <- function(results, compound_index = 1, y_limits = c(0, 150)
   
   validate_inputs(results, compound_index)
   
+# Resolve label_sep: the separator used for DISPLAY purposes (titles, labels,
+# filenames). The internal data separator (used for parsing compound names)
+# is always ":" or whatever attr(results, "label_sep") reports; label_sep
+# here controls only what the user SEES.
+# Priority: explicit argument > attribute on results > default ":"
+if (is.null(label_sep)) {
+  label_sep <- attr(results, "label_sep")
+  if (is.null(label_sep) || !is.character(label_sep) ||
+      length(label_sep) != 1L || is.na(label_sep) || nchar(label_sep) == 0L) {
+    label_sep <- ":"
+  }
+}
+
   # Extract compound data
   result <- results$detailed_results[[compound_index]]
   
@@ -265,6 +389,35 @@ plot_dose_response <- function(results, compound_index = 1, y_limits = c(0, 150)
   
   # Extract compound name (remove plate info if present)
   compound_name_display <- strsplit(result$compound, " \\| ")[[1]][1]
+
+  # Create a display version of the compound name where the internal
+  # separator is replaced with the user-facing label_sep. We don't rely on
+  # attr(results, "label_sep") here because plot_dose_response is often
+  # called with a single plate's drc_result (which lacks the attribute).
+  # Instead, we split on the first occurrence of a known separator and
+  # re-join with label_sep — robust regardless of the data separator.
+  .find_data_sep <- function(name) {
+    # Try the attribute first (most reliable when available)
+    attr_sep <- attr(results, "label_sep")
+    if (!is.null(attr_sep) && nchar(attr_sep) == 1L &&
+        grepl(attr_sep, name, fixed = TRUE)) return(attr_sep)
+    # Fall back to common separators in priority order
+    for (s in c(":", "/", " | ")) {
+      if (grepl(s, name, fixed = TRUE)) return(s)
+    }
+    return(NULL)  # no separator found
+  }
+  data_sep_found <- .find_data_sep(compound_name_display)
+  compound_name_label <- if (!is.null(data_sep_found) && data_sep_found != label_sep) {
+    parts <- strsplit(compound_name_display, data_sep_found, fixed = TRUE)[[1]]
+    if (length(parts) >= 2) {
+      paste(parts[1], paste(parts[-1], collapse = data_sep_found), sep = label_sep)
+    } else {
+      compound_name_display
+    }
+  } else {
+    compound_name_display
+  }
   
   # Check if IC50 was excluded due to threshold
   ic50_excluded <- FALSE
@@ -388,9 +541,9 @@ plot_dose_response <- function(results, compound_index = 1, y_limits = c(0, 150)
     final_title <- plot_title
   } else if (isTRUE(plot_title)) {
     if (model_success) {
-      final_title <- compound_name_display
+      final_title <- compound_name_label
     } else {
-      final_title <- paste(compound_name_display, "(Model failed)")
+      final_title <- paste(compound_name_label, "(Model failed)")
     }
   }
   
@@ -401,26 +554,57 @@ plot_dose_response <- function(results, compound_index = 1, y_limits = c(0, 150)
       y = plot_config$y_lab,
       title = final_title
     ) +
-    ggplot2::scale_y_continuous(expand = c(0, 0)) +
-    ggplot2::scale_x_continuous(expand = c(0, 0)) +
+    ggplot2::scale_y_continuous(expand = axis_expand) +
+    ggplot2::scale_x_continuous(expand = axis_expand) +
     ggplot2::coord_cartesian(
       ylim = if (!is.null(y_limits) && length(y_limits) == 2L) y_limits else NULL,
       clip = "on") +
     ggplot2::theme_minimal() +
     ggplot2::theme(
-      axis.title = ggplot2::element_text(size = axis_label_size, face = "bold", color = "black"),
-      axis.text = ggplot2::element_text(size = axis_text_size, color = "black"),
+      axis.title = ggplot2::element_text(size = axis_label_size, face = "bold",
+                                           color = axis_title_color, vjust = axis_vjust),
+      axis.text = ggplot2::element_text(size = axis_text_size, color = axis_text_color),
       axis.line = ggplot2::element_blank(),
-      axis.ticks = ggplot2::element_line(color = "black"),
-      plot.title = ggplot2::element_text(size = axis_label_size + 2, face = "bold", hjust = 0.5, color = "black"),
-      legend.position = "none",
-      panel.grid.major = ggplot2::element_line(color = ifelse(show_grid, "grey90", "white")),
-      panel.grid.minor = ggplot2::element_line(color = ifelse(show_grid, "grey95", "white")),
+      axis.ticks = ggplot2::element_line(color = axis_line_color),
+      plot.title = ggplot2::element_text(size = if (!is.null(plot_title_size)) plot_title_size else axis_label_size + 2,
+                                         face = "bold", hjust = title_hjust, color = axis_title_color),
+      legend.position = ifelse(show_legend, "right", "none"),
+      legend.byrow = byrow,
+      legend.text = ggplot2::element_text(size = legend_text_size),
+      legend.title = ggplot2::element_text(size = legend_title_size, face = "bold"),
+      panel.grid.major = ggplot2::element_line(color = ifelse(show_grid, grid_color, "white"), linewidth = grid_linewidth),
+      panel.grid.minor = ggplot2::element_line(color = ifelse(show_grid, grid_minor_color, "white")),
       panel.background = ggplot2::element_rect(fill = "white", color = NA),
       plot.background = ggplot2::element_rect(fill = "white", color = NA),
       panel.border = ggplot2::element_blank(),
       plot.margin = ggplot2::margin(t = 12, r = 8, b = 8, l = 8, unit = "pt")
     )
+
+  # Optional theme tweaks (only applied when explicitly set, so the defaults
+  # leave the appearance unchanged).
+  if (!is.null(tick_length)) {
+    p <- p + ggplot2::theme(axis.ticks.length = ggplot2::unit(tick_length, "cm"))
+  }
+  if (!is.null(aspect_ratio)) {
+    p <- p + ggplot2::theme(aspect.ratio = aspect_ratio)
+  }
+  if (!is.null(legend_spacing)) {
+    p <- p + ggplot2::theme(legend.spacing = ggplot2::unit(legend_spacing, "pt"))
+  }
+  if (!is.null(plot_margin)) {
+    p <- p + ggplot2::theme(plot.margin = plot_margin)
+  }
+  if (transparent_background) {
+    p <- p + ggplot2::theme(
+      panel.background = ggplot2::element_rect(fill = NA, color = NA),
+      plot.background = ggplot2::element_rect(fill = NA, color = NA)
+    )
+  }
+  if (panel_border) {
+    p <- p + ggplot2::theme(
+      panel.border = ggplot2::element_rect(color = axis_line_color, fill = NA, linewidth = 0.5)
+    )
+  }
   
   # Draw axis lines manually so they stop exactly at the data limits.
   # ggplot2's axis.line element always spans the full panel edge regardless of
@@ -449,7 +633,7 @@ plot_dose_response <- function(results, compound_index = 1, y_limits = c(0, 150)
     ggplot2::geom_segment(
       data = axis_segs,
       ggplot2::aes(x = .data$x, xend = .data$xend, y = .data$y, yend = .data$yend),
-      colour = "black", linewidth = 0.8,
+      colour = axis_line_color, linewidth = axis_line_width,
       inherit.aes = FALSE)
   
   # Add experimental data points
@@ -458,7 +642,9 @@ plot_dose_response <- function(results, compound_index = 1, y_limits = c(0, 150)
       data = summary_data,
       ggplot2::aes(x = log_inhibitor, y = mean_response),
       color = point_color,
-      size = point_size * 2
+      size = point_size * point_size_scale,
+      shape = point_shape,
+      alpha = point_alpha
     )
   
   # Add error bars for replicates
@@ -469,17 +655,24 @@ plot_dose_response <- function(results, compound_index = 1, y_limits = c(0, 150)
   
   if (any(valid_mask)) {
     valid_data <- summary_data[valid_mask, ]
+    # Clip error bar whiskers at the y-axis limits so they never
+    # extend below/above the visible plot area.
+    y_lo_clip <- y_seg_limits[1]
+    y_hi_clip <- y_seg_limits[2]
+    valid_data$ymin_clipped <- pmax(valid_data$mean_response - valid_data$sd_response, y_lo_clip)
+    valid_data$ymax_clipped <- pmin(valid_data$mean_response + valid_data$sd_response, y_hi_clip)
     p <- p +
       ggplot2::geom_errorbar(
         data = valid_data,
         ggplot2::aes(
           x = log_inhibitor,
-          ymin = mean_response - sd_response,
-          ymax = mean_response + sd_response
+          ymin = ymin_clipped,
+          ymax = ymax_clipped
         ),
         width = error_bar_width * 10,
         color = point_color,
-        linewidth = 0.8
+        linewidth = error_linewidth,
+        alpha = error_alpha
       )
   }
   
@@ -490,7 +683,8 @@ plot_dose_response <- function(results, compound_index = 1, y_limits = c(0, 150)
         data = curve_data,
         ggplot2::aes(x = log_inhibitor, y = response),
         color = line_color,
-        linewidth = line_width / 2
+        linewidth = line_width / 2,
+        alpha = curve_alpha
       )
   }
   
@@ -500,9 +694,10 @@ plot_dose_response <- function(results, compound_index = 1, y_limits = c(0, 150)
     p <- p +
       ggplot2::geom_vline(
         xintercept = log_ic50,
-        linetype = "dashed",
+        linetype = ic50_linetype,
         color = ic50_line_color,
-        linewidth = 0.8
+        linewidth = ic50_linewidth,
+        alpha = ic50_line_alpha
       )
   }
   
@@ -523,8 +718,8 @@ plot_dose_response <- function(results, compound_index = 1, y_limits = c(0, 150)
           label = legend_content[i],
           hjust = 0,  # Left alignment
           vjust = 0,
-          size = axis_text_size * 0.3,
-          color = "black"
+          size = axis_text_size * legend_annotation_scale,
+          color = axis_text_color
         )
     }
   }
@@ -534,7 +729,7 @@ plot_dose_response <- function(results, compound_index = 1, y_limits = c(0, 150)
     if (is.character(save_plot)) {
       filename <- save_plot
     } else if (is.logical(save_plot) && save_plot) {
-      safe_name <- gsub("[^a-zA-Z0-9._-]", "_", compound_name_display)
+      safe_name <- gsub("[^a-zA-Z0-9._-]", "_", compound_name_label)
       filename <- paste0("dose_response_", safe_name, ".png")
     } else {
       stop("save_plot must be either a file path or TRUE for auto-naming")
@@ -561,7 +756,7 @@ plot_dose_response <- function(results, compound_index = 1, y_limits = c(0, 150)
   
   # Return plot with comprehensive metadata
   metadata <- list(
-    compound_name = compound_name_display,
+    compound_name = compound_name_label,
     compound_index = compound_index,
     model_success = model_success,
     summary_data = summary_data,

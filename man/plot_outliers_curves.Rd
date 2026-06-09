@@ -12,7 +12,8 @@ plot_outliers_curves(
   ncol = 4L,
   file = NULL,
   width = NULL,
-  height = NULL
+  height = NULL,
+  label_sep = ":"
 )
 }
 \arguments{
@@ -41,6 +42,12 @@ plots.}
 
 \item{height}{Plot height in inches.  Default:
 \code{ceiling(n_compounds / ncol) * 3.0 + 0.6}.}
+
+\item{label_sep}{Character separator used in display labels between
+construct and compound names.  Defaults to \code{":"}.  Change to
+e.g. \code{"/"} to show \code{"EPHA1/KK135"} instead of
+\code{"EPHA1:KK135"} in plot titles and legends.  The internal data
+always uses \code{":"}; this parameter only affects display.}
 }
 \value{
 Invisibly returns the combined \pkg{patchwork} ggplot object.
