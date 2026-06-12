@@ -348,6 +348,33 @@ The internal data always uses `":"` — this parameter only affects how labels a
 | `"/"` | `EPHA1/KK135` | Personal preference or journal style |
 | `"\|"` | `EPHA1\|KK135` | Either name contains `/` |
 
+#### `legend_width`: consistent legend widths across plots
+
+When generating multiple plots (e.g. one per compound group), legend widths can vary because shorter labels produce narrower legends. This breaks alignment in multi-panel figures. The `legend_width` parameter in `plot_multiple_compounds()` and `compare_plates_drc()` addresses this by measuring the rendered legend width in cm and padding it to a target width via `legend.box.margin`, guaranteeing the data panel is identically sized across plots.
+
+**Numeric target** — pad the legend column to exactly this width (in cm):
+
+```r
+# Pad legend to 4 cm so all plots have identical panel sizes
+plot_multiple_compounds(drc_results, legend_width = 4)
+```
+
+**`"auto"` mode** — measure and return the current legend width without padding. Useful for determining the maximum width across a set of plots:
+
+```r
+# First pass: measure legend widths
+p1 <- plot_multiple_compounds(drc_results, compound_indices = 1:5,  legend_width = "auto")
+p2 <- plot_multiple_compounds(drc_results, compound_indices = 6:10, legend_width = "auto")
+max_w <- max(attr(p1, "metadata")$legend_width_cm,
+             attr(p2, "metadata")$legend_width_cm)
+
+# Second pass: pad all legends to the maximum width
+p1 <- plot_multiple_compounds(drc_results, compound_indices = 1:5,  legend_width = max_w)
+p2 <- plot_multiple_compounds(drc_results, compound_indices = 6:10, legend_width = max_w)
+```
+
+Only right- and left-positioned legends are affected; bottom/top legends span the full panel width and need no padding. The measured width is stored in `attr(p, "metadata")$legend_width_cm`.
+
 ---
 
 ### Step 2 -- Remove outliers (optional)
@@ -923,6 +950,28 @@ Saves one PNG per compound across all plates into `output_dir`. When `save_panel
 
 ---
 
+### Plot a single compound
+
+```r
+# Plot compound 3 from the first plate
+plot_dose_response(drc_results, compound_index = 3)
+
+# Customise appearance
+plot_dose_response(drc_results,
+  compound_index  = 3,
+  y_limits        = c(0, 100),
+  x_limits        = c(-9, -5),     # log10 molar; NULL auto-scales
+  show_legend     = TRUE,          # show IC50/R2 as in-plot text
+  show_ic50_line  = TRUE,
+  label_sep       = "/",           # display separator in title
+  save_plot       = TRUE
+)
+```
+
+`plot_dose_response()` plots one compound at a time. It uses in-plot text annotations (not a colour legend) for IC50 and R2 values, so `legend_width` does not apply here — use `plot_multiple_compounds()` for multi-compound overlays with a shared legend.
+
+---
+
 ### Overlay multiple compounds on one plot
 
 ```r
@@ -1075,9 +1124,25 @@ compare_plates_drc(
   axis_line_color        = "black",
   show_border            = FALSE,
   # Background
-  transparent_background = FALSE
+  transparent_background = FALSE,
+  # Legend width alignment
+  legend_width           = NULL          # NULL = no padding; 4 = pad to 4 cm; "auto" = two-pass measure + pad
 )
 ```
+
+**Consistent legend widths across plate comparison plots:**
+
+When comparing plates, each plot's legend shows plate names (e.g. "plate_01", "plate_02"). If plate names have different lengths, the data panels will differ in width. Use `legend_width` to fix this:
+
+```r
+# Pad all comparison plot legends to 4 cm
+compare_plates_drc(drc_results, legend_width = 4)
+
+# "auto" mode: automatically measures all legends and pads to the maximum
+compare_plates_drc(drc_results, legend_width = "auto")
+```
+
+With `legend_width = "auto"`, `compare_plates_drc()` runs a two-pass approach: first it measures every legend's width, then it re-renders all plots padded to the maximum. This guarantees all panels are identically sized without manual measurement.
 
 ---
 
@@ -1228,6 +1293,83 @@ scarab_viability(
 
 ---
 
+### Batch plot with faceting (`plot_drc_batch`)
+
+`plot_drc_batch()` overlays dose-response curves across plates with support for faceting and duplicate shape differentiation. It is designed for comparing the same compound across multiple plates or viewing all compounds from a batch result in a structured layout.
+
+```r
+plot_drc_batch(
+  batch_drc_results,
+  construct_compound = "EPHA1:KK135",  # select by name
+  # position = 3,                       # or by position
+  facet_by     = "compound",            # split into panels by compound, plate, or construct
+  facet_ncol   = 2,
+  facet_scales = "fixed",               # "free_y" for independent y-axes
+  y_limits     = c(0, 100),
+  color_palette = "colorblind",
+  save_plot    = TRUE
+)
+```
+
+**Key parameters:**
+
+| Parameter | Default | Description |
+|---|---|---|
+| `facet_by` | `NULL` | Variable to facet by: `"compound"`, `"plate"`, or `"construct"` |
+| `facet_ncol` | `NULL` | Number of columns in the facet grid |
+| `facet_scales` | `"fixed"` | Axis scaling per panel: `"fixed"`, `"free_y"`, `"free_x"`, `"free"` |
+| `shape_by_duplicate` | `FALSE` | Use different point shapes for replicate measurements |
+| `font_family` | `"sans"` | Font family for all text elements |
+
+---
+
+### Save individual plots from a single result (`plot_all_dose_responses`)
+
+`plot_all_dose_responses()` generates and saves one dose-response plot per compound from a single-plate `drc_result` object. It is a convenience wrapper around `plot_dose_response()`.
+
+```r
+plot_all_dose_responses(
+  results,
+  compounds    = "all",           # or a numeric vector of indices
+  output_dir   = "dose_response_plots",
+  label_sep    = NULL,            # display separator; auto-detected from attr
+  ...
+)
+```
+
+---
+
+### Reshape results for publication (`reshape_dr_table`)
+
+`reshape_dr_table()` transforms the wide-format results table from `fit_drc_3pl()` into a standardised layout with parameters as rows and compounds as columns, organised into logical sections (best-fit values, confidence intervals, etc.).
+
+```r
+reshaped <- reshape_dr_table(
+  results_table  = drc_results$final_summary_table,
+  output_file    = "reshaped_results.xlsx",   # optional Excel export
+  decimal_comma  = FALSE
+)
+```
+
+---
+
+### Export multiple sheets to Excel (`save_multiple_sheets`)
+
+`save_multiple_sheets()` writes multiple data frames to a single Excel file with professional formatting, decimal separator customisation, and selective rounding.
+
+```r
+save_multiple_sheets(
+  "output.xlsx",
+  Summary = summary_df,
+  Details = details_df,
+  decimal_comma  = TRUE,    # European format
+  decimal_places = 3,
+  round_sheets   = 2        # round only the second sheet
+)
+```
+
+---
+
 ## Function Reference
 
 ### Batch pipeline functions
@@ -1241,7 +1383,9 @@ scarab_viability(
 | `plot_outliers_batch_curves()` | Visualise outlier-flagged curves (batch) |
 | `batch_drc_analysis()` | Fit 3PL or 4PL dose-response curves across all plates |
 | `batch_save_all_drc_plots()` | Save one plot per compound across all plates |
+| `plot_all_dose_responses()` | Save individual dose-response plots from a single-plate result |
 | `plot_multiple_compounds()` | Overlay selected compounds on one plot |
+| `plot_drc_batch()` | Overlay compounds across plates with faceting and duplicate shape support |
 | `compare_plates_drc()` | Compare the same compound across plates |
 | `scarab_table()` | Generate Scarab-format export table (NanoBRET) |
 | `scarab_viability()` | Generate Scarab-format export table (cell viability) |
@@ -1261,3 +1405,11 @@ used directly for interactive exploration of a single plate.
 | `plot_dose_response()` | Plot a single dose-response curve |
 | `rout_outliers()` | ROUT outlier detection for a single plate |
 | `plot_outliers_curves()` | Visualise outlier-flagged curves for a single plate |
+
+### Utility functions
+
+| Function | Description |
+|---|---|
+| `reshape_dr_table()` | Reshape dose-response results to standardised publication format |
+| `save_multiple_sheets()` | Export multiple data frames to a formatted Excel file |
+| `globals.R` | Package-internal global variable declarations (not user-facing) |

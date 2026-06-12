@@ -80,6 +80,15 @@
 #' @param legend_ncol Numeric value specifying number of columns in legend
 #' @param legend_label_wrap Maximum character width before legend labels
 #'   automatically wrap to new lines. Default: `25`.
+#' @param legend_width Numeric, \code{"auto"}, or NULL. Target width (in cm) for the legend
+#'   column, including the legend keys, labels, and any internal margins.
+#'   When specified, the legend column is padded via
+#'   \code{legend.box.margin} so it occupies exactly this width — guaranteeing
+#'   that the data panel is identically sized across plots with different
+#'   label lengths. Use \code{legend_width = "auto"} to measure and return
+#'   the current legend width without padding (useful for determining the
+#'   target width across a set of plots). Only affects right- and
+#'   left-positioned legends. \code{NULL} (default) disables padding.
 #' @param legend_title Title for the legend (displayed above symbols).
 #' @param verbose Logical; if TRUE (default), prints informative messages about processing
 #'   steps, compound matches, and color assignments.
@@ -155,7 +164,8 @@
 #'@importFrom ggplot2 aes
 #'
 #'
-#' @return A ggplot2 object with the generated plot, containing metadata attributes:
+#' @return A ggplot2 object with the generated plot, containing metadata attributes.
+#'   Metadata includes \code{legend_width_cm} (measured legend width in cm).
 #'   \item{selected_compounds}{Character vector of selected compound names}
 #'   \item{smart_legend_names}{Automatically generated legend labels}
 #'   \item{n_compounds}{Number of compounds plotted}
@@ -397,6 +407,7 @@ plot_multiple_compounds <- function(results,
                                     aspect_ratio = NULL,
                                     byrow = FALSE,
                                     label_sep = NULL,
+                                    legend_width = NULL,
                                     ic50_linetype = "dashed",
                                     ic50_linewidth = 0.5,
                                     ic50_line_alpha = 0.8,
@@ -662,6 +673,26 @@ plot_multiple_compounds <- function(results,
 
       return(label)
     }, USE.NAMES = FALSE)
+  }
+
+
+  # Measure the actual rendered width (in cm) of the legend in a ggplot object.
+  # Returns 0 if no legend is present.
+  measure_legend_width <- function(p) {
+    g <- ggplot2::ggplotGrob(p)
+    guide_idx <- grep("guide-box", g$layout$name)
+    if (length(guide_idx) == 0) return(0)
+    for (i in guide_idx) {
+      l_col <- g$layout$l[i]
+      r_col <- g$layout$r[i]
+      widths_cm <- sapply(l_col:r_col, function(col) {
+        w <- g$widths[col]
+        tryCatch(as.numeric(grid::convertUnit(w, "cm")), error = function(e) NA)
+      })
+      total <- sum(widths_cm, na.rm = TRUE)
+      if (total > 0.01) return(total)
+    }
+    return(0)
   }
 
   # ============================================================================
@@ -1797,7 +1828,7 @@ plot_multiple_compounds <- function(results,
       axis.line.y.left   = ggplot2::element_blank(),
       axis.line.x.top    = ggplot2::element_blank(),
       axis.line.y.right  = ggplot2::element_blank(),
-      axis.ticks = ggplot2::element_line(color = axis_line_color),
+      axis.ticks = ggplot2::element_line(color = axis_line_color, linewidth = axis_line_width),
       axis.ticks.length = ggplot2::unit(tick_length, "cm"),
       legend.text = ggplot2::element_text(size = legend_text_size, lineheight = legend_lineheight),
       legend.title = ggplot2::element_text(size = legend_title_size, face = "bold"),
@@ -1845,7 +1876,7 @@ plot_multiple_compounds <- function(results,
     p <- p + ggplot2::theme(aspect.ratio = aspect_ratio)
   }
   if (!is.null(legend_spacing)) {
-    p <- p + ggplot2::theme(legend.spacing = ggplot2::unit(legend_spacing, "pt"))
+    p <- p + ggplot2::theme(legend.key.spacing.y = ggplot2::unit(legend_spacing, "pt"))
   }
   if (!is.null(plot_margin)) {
     p <- p + ggplot2::theme(plot.margin = plot_margin)
@@ -1872,6 +1903,37 @@ plot_multiple_compounds <- function(results,
   # ============================================================================
   # 13. DISPLAY AND SAVE
   # ============================================================================
+
+  # --- Legend width alignment ---
+  # Measure the rendered legend width and pad to a target so that
+  # multiple plots with different label lengths have identical panel sizes.
+  # Only right- and left-positioned legends affect panel width;
+  # bottom/top legends span the full panel width and need no padding.
+  legend_width_cm <- measure_legend_width(p)
+
+  if (is.character(legend_width) && legend_width == "auto") {
+    # "auto" mode: don't pad, just record the measured width in metadata
+    # so the caller can determine the max across a set of plots
+    if (verbose) message("Measured legend width: ", round(legend_width_cm, 3), " cm")
+  } else if (!is.null(legend_width) && is.numeric(legend_width)) {
+    if (legend_width_cm == 0) {
+      # No side-positioned legend detected (bottom/top legend or no legend)
+      if (verbose) message("legend_width has no effect: no side-positioned legend detected")
+    } else if (legend_width_cm < legend_width) {
+      pad_cm <- legend_width - legend_width_cm
+      # Pad on the side opposite the legend to extend the legend column
+      if (legend_position == "left") {
+        p <- p + ggplot2::theme(legend.box.margin = ggplot2::margin(l = pad_cm, unit = "cm"))
+      } else {
+        p <- p + ggplot2::theme(legend.box.margin = ggplot2::margin(r = pad_cm, unit = "cm"))
+      }
+      if (verbose) message("Padded legend from ", round(legend_width_cm, 3), " cm to ", legend_width, " cm")
+      legend_width_cm <- legend_width
+    } else if (verbose) {
+      message("Legend width (", round(legend_width_cm, 3), " cm) already >= target (", legend_width, " cm); no padding applied")
+    }
+  }
+
 
   print(p)
 
@@ -1926,6 +1988,7 @@ plot_multiple_compounds <- function(results,
     legend_title = legend_title_final,
     legend_text_size = legend_text_size,
     legend_title_size = legend_title_size,
+    legend_width_cm = legend_width_cm,
     wrapped_labels = wrapped_labels,
     x_limits = x_limits,
     plot_dimensions = c(width = plot_width, height = plot_height, dpi = plot_dpi),

@@ -54,6 +54,7 @@ plot_multiple_compounds(
   aspect_ratio = NULL,
   byrow = FALSE,
   label_sep = NULL,
+  legend_width = NULL,
   ic50_linetype = "dashed",
   ic50_linewidth = 0.5,
   ic50_line_alpha = 0.8,
@@ -224,6 +225,16 @@ the attribute and is never overridden by this argument. This separation
 ensures that changing the display separator does not break title or legend
 logic, which was a bug in the previous single-separator design.}
 
+\item{legend_width}{Numeric, \code{"auto"}, or NULL. Target width (in cm) for the legend
+column, including the legend keys, labels, and any internal margins.
+When specified, the legend column is padded via
+\code{legend.box.margin} so it occupies exactly this width — guaranteeing
+that the data panel is identically sized across plots with different
+label lengths. Use \code{legend_width = "auto"} to measure and return
+the current legend width without padding (useful for determining the
+target width across a set of plots). Only affects right- and
+left-positioned legends. \code{NULL} (default) disables padding.}
+
 \item{ic50_linetype}{Character or integer. Line type for the IC50 vertical
 reference lines (default: \code{"dashed"}). See \code{?par} for valid values.}
 
@@ -283,7 +294,8 @@ specific plate. Has no effect when \code{results} is already a plain
 \code{drc_result} object.}
 }
 \value{
-A ggplot2 object with the generated plot, containing metadata attributes:
+A ggplot2 object with the generated plot, containing metadata attributes.
+Metadata includes \code{legend_width_cm} (measured legend width in cm).
 \item{selected_compounds}{Character vector of selected compound names}
 \item{smart_legend_names}{Automatically generated legend labels}
 \item{n_compounds}{Number of compounds plotted}
